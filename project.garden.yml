@@ -1,6 +1,6 @@
 kind: Project
 name: vote-demo-quickstart
-defaultEnvironment: local
+defaultEnvironment: hackfest
 dotIgnoreFiles: [.gitignore]
 
 variables:
@@ -8,17 +8,18 @@ variables:
   postgres-database: postgres
   postgres-password: postgres
 
-  user-namespace: vote-demo-quickstart-${local.username}
+  user-namespace: hackfest-${kebabCase(local.username)}
+  hackfest-cluster-name: g4funa
 
 environments:
   - name: local
     defaultNamespace: ${var.user-namespace}
     variables:
-      base-hostname: local.demo.garden
-  - name: remote
+      base-hostname: ${var.user-namespace}.local
+  - name: hackfest
     defaultNamespace: ${var.user-namespace}
     variables:
-      base-hostname: "<add you values here>"
+      base-hostname: "${var.user-namespace}.${var.hackfest-cluster-name}.k8s.hingehealth.dev"
 
 providers:
   - name: local-kubernetes
@@ -30,16 +31,29 @@ providers:
   # Please see our docs on using the (remote) Kubernetes plugin to learn how to configure
   # the values below.
   - name: kubernetes
-    environments: [remote]
-    context: "<add your values>"
-    ingressClass: "nginx"
-    buildMode: cluster-buildkit
+    buildMode: kaniko
+    environments: [hackfest]
+    context: "${var.hackfest-cluster-name}"
+    ingressClass: "external"
+    kaniko:
+      extraFlags:
+        - --cache
+        - --cache-repo=905652836327.dkr.ecr.us-west-1.amazonaws.com/garden/cache
+        - --snapshotMode=redo
+        - --use-new-run
+      namespace: null
+    tlsCertificates:
+      - name: hackfest-external
+        hostnames:
+          - api-${var.base-hostname}
+          - vote-${var.base-hostname}
+        secretRef:
+          name: tls-wildcard
+          namespace: apps
     imagePullSecrets:
-      - name: "<add your values>"
+      - name: ecr-config
         namespace: default
-    deploymentRegistry:
-      hostname: "<add your values>"
-      namespace: "<add your values>"
+      - name: docker-config
+        namespace: default
     namespace: ${environment.namespace}
     defaultHostname: ${var.base-hostname}
-

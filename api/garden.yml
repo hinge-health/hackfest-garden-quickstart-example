@@ -21,7 +21,7 @@ services:
     ingresses:
       - path: /
         port: http
-        hostname: api.${variables.base-hostname}
+        hostname: api-${variables.base-hostname}
     dependencies:
       - redis
 tests:

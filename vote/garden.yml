@@ -23,7 +23,7 @@ services:
     ingresses:
       - path: /
         port: http
-        hostname: vote.${variables.base-hostname}
+        hostname: vote-${variables.base-hostname}
     env:
       HOSTNAME: vote.${variables.base-hostname}
       VUE_APP_USERNAME: ${local.username}
